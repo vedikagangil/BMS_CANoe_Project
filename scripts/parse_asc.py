@@ -24,6 +24,7 @@ def parse_asc_file(file_path):
         'packSOH': [],
         'packTemp': [],
         'packRange': [],
+        'packCurrent': [],  # ADDED: Pack Current
         'acceleration': [],
         'cellSOC': [[], [], []],  # For 3 cells
         'cellSOH': [[], [], []]   # For 3 cells
@@ -81,6 +82,7 @@ def process_can_message(timestamp, can_id, data, time_series):
             time_series['packSOH'].append(time_series['packSOH'][-1] if time_series['packSOH'] else 95)
             time_series['packTemp'].append(time_series['packTemp'][-1] if time_series['packTemp'] else 25)
             time_series['packRange'].append(time_series['packRange'][-1] if time_series['packRange'] else 200)
+            time_series['packCurrent'].append(time_series['packCurrent'][-1] if time_series['packCurrent'] else 0)  # ADDED
             
             # Add placeholder cell data
             for i in range(3):
@@ -99,6 +101,7 @@ def process_can_message(timestamp, can_id, data, time_series):
                 time_series['packSOH'].append(95)
                 time_series['packTemp'].append(25)
                 time_series['packRange'].append(200)
+                time_series['packCurrent'].append(0)  # ADDED
                 for j in range(3):
                     time_series['cellSOC'][j].append(50)
                     time_series['cellSOH'][j].append(95)
@@ -111,6 +114,7 @@ def process_can_message(timestamp, can_id, data, time_series):
             time_series['packSOH'].append(95)
             time_series['packTemp'].append(25)
             time_series['packRange'].append(200)
+            time_series['packCurrent'].append(0)  # ADDED
             time_series['acceleration'].append(0)  # Default acceleration
             for i in range(3):
                 time_series['cellSOC'][i].append(50)
@@ -126,6 +130,8 @@ def process_can_message(timestamp, can_id, data, time_series):
             time_series['packTemp'].append(time_series['packTemp'][-1] if time_series['packTemp'] else 25)
         while len(time_series['packRange']) < current_length:
             time_series['packRange'].append(time_series['packRange'][-1] if time_series['packRange'] else 200)
+        while len(time_series['packCurrent']) < current_length:  # ADDED
+            time_series['packCurrent'].append(time_series['packCurrent'][-1] if time_series['packCurrent'] else 0)
         while len(time_series['acceleration']) < current_length:
             time_series['acceleration'].append(time_series['acceleration'][-1] if time_series['acceleration'] else 0)
         
@@ -193,8 +199,8 @@ def process_can_message(timestamp, can_id, data, time_series):
                     time_series['cellSOH'][2][-1] = data[0]
         
         elif index == 8:  # 0x209 - Pack current
-            # Not directly used in current charts, but you can add it if needed
-            pass
+            if len(data) >= 1:  # CHANGED: Now processes current data
+                time_series['packCurrent'][-1] = data[0]
         
         elif index == 9:  # 0x20A - Pack range
             if len(data) >= 1:
@@ -232,7 +238,7 @@ def ensure_data_consistency(time_series):
     max_length = len(time_series['timestamps'])
     
     # Ensure all main arrays have the same length
-    for key in ['packSOC', 'packSOH', 'packTemp', 'packRange', 'acceleration']:
+    for key in ['packSOC', 'packSOH', 'packTemp', 'packRange', 'packCurrent', 'acceleration']:  # ADDED packCurrent
         while len(time_series[key]) < max_length:
             if time_series[key]:
                 time_series[key].append(time_series[key][-1])
@@ -246,6 +252,8 @@ def ensure_data_consistency(time_series):
                     time_series[key].append(25)
                 elif key == 'packRange':
                     time_series[key].append(200)
+                elif key == 'packCurrent':  # ADDED
+                    time_series[key].append(0)
                 else:  # acceleration
                     time_series[key].append(0)
     
@@ -277,12 +285,18 @@ def main():
         print(f"Pack SOC data points: {len(time_series_data['packSOC'])}")
         print(f"Pack SOH data points: {len(time_series_data['packSOH'])}")
         print(f"Temperature data points: {len(time_series_data['packTemp'])}")
+        print(f"Pack Current data points: {len(time_series_data['packCurrent'])}")  # ADDED
         print(f"Acceleration data points: {len(time_series_data['acceleration'])}")
         
         # Print acceleration data sample for verification
         if time_series_data['acceleration']:
             print(f"Acceleration data range: {min(time_series_data['acceleration'])} to {max(time_series_data['acceleration'])}")
             print(f"First 20 acceleration values: {time_series_data['acceleration'][:20]}")
+        
+        # Print pack current data sample for verification
+        if time_series_data['packCurrent']:  # ADDED
+            print(f"Pack Current range: {min(time_series_data['packCurrent'])} to {max(time_series_data['packCurrent'])} A")
+            print(f"First 20 current values: {time_series_data['packCurrent'][:20]}")
         
         # Ensure data consistency
         ensure_data_consistency(time_series_data)
