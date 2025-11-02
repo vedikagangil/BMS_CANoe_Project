@@ -15,6 +15,7 @@
             --accent-3: #FFD166;
             --accent-4: #744577;
             --accent-5: #118AB2;
+            --accent-6: #FF8C42; /* ADDED: For current chart */
         }
         
         body {
@@ -203,6 +204,12 @@
             <div class="chart-container">
                 <h3 class="chart-title">Pack Range</h3>
                 <canvas id="rangeChart"></canvas>
+            </div>
+            
+            <!-- ADDED: Pack Current Chart -->
+            <div class="chart-container">
+                <h3 class="chart-title">Pack Current</h3>
+                <canvas id="currentChart"></canvas>
             </div>
             
             <div class="chart-container">
@@ -693,6 +700,63 @@
                             },
                             min: Math.max(0, Math.min(...ts.packRange) - 10),
                             max: Math.max(...ts.packRange) + 10,
+                            ticks: {
+                                color: '#F5F5F5'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // ADDED: Pack Current Chart
+            charts.current = new Chart(document.getElementById('currentChart'), {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Pack Current (A)',
+                        data: ts.packCurrent,
+                        borderColor: '#FF8C42',
+                        backgroundColor: 'rgba(255, 140, 66, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F5F5F5'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time (min:sec)',
+                                color: '#F5F5F5'
+                            },
+                            ticks: {
+                                color: '#F5F5F5'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Current (A)',
+                                color: '#F5F5F5'
+                            },
+                            min: Math.min(0, Math.min(...ts.packCurrent) - 10),
+                            max: Math.max(...ts.packCurrent) + 10,
                             ticks: {
                                 color: '#F5F5F5'
                             },
